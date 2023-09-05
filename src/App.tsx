@@ -8,6 +8,8 @@ import './App.css';
  */
 interface IState {
   data: ServerRespond[],
+  // the showGraph represent wether the graph is shown(when true) or not(when false)
+  showGraph: boolean
 }
 
 /**
@@ -22,6 +24,8 @@ class App extends Component<{}, IState> {
       // data saves the server responds.
       // We use this state to parse data down to the child element (Graph) as element property
       data: [],
+      // the initial state of graph is hidden
+      showGraph: false
     };
   }
 
@@ -29,18 +33,37 @@ class App extends Component<{}, IState> {
    * Render Graph react component with state.data parse as property data
    */
   renderGraph() {
-    return (<Graph data={this.state.data}/>)
+    // when showGraph is true, it will starts rendering the graph
+    if(this.state.showGraph){
+      return (<Graph data={this.state.data}/>)
+    }
   }
 
   /**
    * Get new data from server and update the state with the new data
    */
   getDataFromServer() {
-    DataStreamer.getData((serverResponds: ServerRespond[]) => {
-      // Update the state by creating a new array of data that consists of
-      // Previous data in the state and the new data from server
-      this.setState({ data: [...this.state.data, ...serverResponds] });
-    });
+    // Initialize a counter to keep track of the number of iterations
+    let x = 0;
+    // Set up an interval to periodically fetch data from the server
+    const interval = setInterval(() =>{
+      DataStreamer.getData((serverResponds: ServerRespond[]) => {
+        // Update the state by creating a new array of data that consists of
+        // Previous data in the state and the new data from server
+        this.setState({ 
+          data: serverResponds,
+          showGraph: true,
+        });
+      });
+      // Increment the counter
+      x++;
+
+      // If the counter reaches a certain threshold (e.g., 1000), stop the interval
+      if(x> 1000){
+        clearInterval(interval);
+      }
+    }, 100);
+    
   }
 
   /**
